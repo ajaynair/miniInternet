@@ -1,0 +1,5 @@
+From this dir run cmds to start the server:
+
+uwsgi --http-socket 127.0.0.1:5683 --mount /=http_server:app
+or
+uwsgi --http-socket 127.0.0.1:5683 --mount /=https_server:app
