@@ -1,8 +1,6 @@
-# uwsgi --master --https localhost:5683,server-public-key.pem,server-private-key.pem --mount /=server:app
-
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 
 
 def generate_private_key(filename: str, passphrase: str):
@@ -21,17 +19,12 @@ def generate_private_key(filename: str, passphrase: str):
                 encryption_algorithm=algorithm,
             )
         )
+
     return private_key
-
-
 from datetime import datetime, timedelta
-
 from cryptography import x509
-
 from cryptography.x509.oid import NameOID
-
 from cryptography.hazmat.primitives import hashes
-
 
 def generate_public_key(private_key, filename, **kwargs):
     subject = x509.Name(
@@ -76,7 +69,6 @@ def generate_public_key(private_key, filename, **kwargs):
 
     return public_key
 
-
 private_key = generate_private_key("ca-private-key.pem", "secret_password")
 generate_public_key(
     private_key,
@@ -85,7 +77,8 @@ generate_public_key(
     state="Maryland",
     locality="Baltimore",
     org="My CA Company",
-    hostname="my-ca.com")
+    hostname="my-ca.com",
+)
 
 def generate_csr(private_key, filename, **kwargs):
     subject = x509.Name(
@@ -118,8 +111,6 @@ def generate_csr(private_key, filename, **kwargs):
         csrfile.write(csr.public_bytes(serialization.Encoding.PEM))
 
     return csr
-
-
 server_private_key = generate_private_key("server-private-key.pem", "serverpassword")
 generate_csr(
     server_private_key,
@@ -158,8 +149,11 @@ def sign_csr(csr, ca_public_key, ca_private_key, new_filename):
     with open(new_filename, "wb") as keyfile:
         keyfile.write(public_key.public_bytes(serialization.Encoding.PEM))
 
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
 csr_file = open("server-csr.pem", "rb")
 csr = x509.load_pem_x509_csr(csr_file.read(), default_backend())
+
 ca_public_key_file = open("ca-public-key.pem", "rb")
 ca_public_key = x509.load_pem_x509_certificate(
     ca_public_key_file.read(), default_backend()
@@ -169,9 +163,9 @@ from getpass import getpass
 from cryptography.hazmat.primitives import serialization
 ca_private_key_file = open("ca-private-key.pem", "rb")
 ca_private_key = serialization.load_pem_private_key(
-  ca_private_key_file.read(),
-  getpass().encode("utf-8"),
-  default_backend(),
+    ca_private_key_file.read(),
+    getpass().encode("utf-8"),
+    default_backend(),
 )
 
 sign_csr(csr, ca_public_key, ca_private_key, "server-public-key.pem")
